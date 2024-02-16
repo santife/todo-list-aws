@@ -27,7 +27,7 @@ pipeline {
                 sh '''
                     sam build
                     
-                    sam deploy --stack-name todo-list-aws --resolve-s3 --region us-east-1 --no-fail-on-empty-changeset --force-upload --config-env staging
+                    sam deploy --stack-name todo-list-aws-staging --resolve-s3 --region us-east-1 --no-fail-on-empty-changeset --force-upload --config-env staging
                 '''
             }
         }
@@ -35,7 +35,7 @@ pipeline {
         stage ('Rest Test'){
             steps{
               sh '''
-                vari=$(aws cloudformation describe-stacks --stack-name todo-list-aws --query Stacks[0].Outputs[0].OutputValue --output text)
+                vari=$(aws cloudformation describe-stacks --stack-name todo-list-aws-staging --query Stacks[0].Outputs[0].OutputValue --output text)
                 export BASE_URL=$vari
                 pytest -s --junitxml=result-rest.xml test/integration/todoApiTest.py
               '''
