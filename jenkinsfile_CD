@@ -36,7 +36,7 @@ pipeline {
               sh '''
                 vari=$(aws cloudformation describe-stacks --stack-name todo-list-aws --query Stacks[0].Outputs[0].OutputValue --output text)
                 export BASE_URL=$vari
-                pytest --junitxml=test/integration/result-rest.xml -k "not deletetodo and not updatetodo and not addtodo" -s test/integration/todoApiTest.py
+                pytest --junitxml=result-rest.xml -k "not deletetodo and not updatetodo and not addtodo" -s test/integration/todoApiTest.py
               '''
               junit 'result*.xml'
             }
