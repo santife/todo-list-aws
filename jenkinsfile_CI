@@ -34,10 +34,6 @@ pipeline {
         
         stage ('Rest Test'){
             steps{
-              echo 'En Construccion'
-              //sh 'export BASE_URL=$(aws cloudformation describe-stacks --stack-name todo-list-aws --query Stacks[0].Outputs[0].OutputValue --output text)'
-              //sh 'export PYTHONPATH=$(pwd)'
-              //sh 'pytest --junitxml=result_rest.xml test/integration/todoApiTest.py $BASE_URL'
               sh '''
                 vari=$(aws cloudformation describe-stacks --stack-name todo-list-aws --query Stacks[0].Outputs[0].OutputValue --output text)
                 export BASE_URL=$vari
