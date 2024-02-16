@@ -19,38 +19,42 @@ pipeline {
                 '''
                 recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')], qualityGates: [[threshold: 8, type: 'TOTAL', unstable: false], [threshold: 10, type: 'TOTAL', unsatble: false]]
             
-               
-            
             }
         }
         
         stage ('SAM Deply'){
             steps{
-                sh 'sam build'
-                //sh 'sam deploy --stack-name "todo-list-aws" --region "us-east-1" --config-env staging --no-fail-on-empty-changeset  --force-upload --resolve-s3'
-                sh 'sam deploy --stack-name todo-list-aws --resolve-s3 --region us-east-1 --no-fail-on-empty-changeset --force-upload --config-env staging'
-                script{
-                    def BASE_URL = sh( script: "aws cloudformation describe-stacks --stack-name todo-list-aws --query Stacks[0].Outputs[0].OutputValue --output text")
-                    echo "$BASE_URL"
-                }
-                sh'''                    
-                    BASE_URL=$(aws cloudformation describe-stacks --stack-name todo-list-aws --query "Stacks[0].Outputs[0].OutputValue" --output text)
-                    echo $BASE_URL
+                sh '''
+                    sam build
+                    
+                    sam deploy --stack-name todo-list-aws --resolve-s3 --region us-east-1 --no-fail-on-empty-changeset --force-upload --config-env staging
                 '''
-                
             }
         }
         
         stage ('Rest Test'){
             steps{
               echo 'En Construccion'
-              sh 'echo $BASE_URL'
+              //sh 'export BASE_URL=$(aws cloudformation describe-stacks --stack-name todo-list-aws --query Stacks[0].Outputs[0].OutputValue --output text)'
+              //sh 'export PYTHONPATH=$(pwd)'
+              //sh 'pytest --junitxml=result_rest.xml test/integration/todoApiTest.py $BASE_URL'
+              sh '''
+                vari=$(aws cloudformation describe-stacks --stack-name todo-list-aws --query Stacks[0].Outputs[0].OutputValue --output text)
+                export BASE_URL=$vari
+                pytest -s --junitxml=result_unit.xml test/integration/todoApiTest.py
+              '''
+              junit 'result*.xml'
             }
         }
         
         stage ('Promote'){
             steps{
-                echo 'En construccion'
+                sh'''
+                    git branch -a
+                    
+                    git checkout -b master origin/master
+                    git merge develop
+                '''
                 cleanWs()
             }
         }
