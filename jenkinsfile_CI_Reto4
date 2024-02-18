@@ -35,7 +35,7 @@ pipeline {
         stage ('Rest Test'){
             steps{
               sh '''
-                vari=$(aws cloudformation describe-stacks --stack-name todo-list-aws-staging --query Stacks[0].Outputs[0].OutputValue --output text)
+                vari=$(aws cloudformation describe-stacks --stack-name todo-list-aws --query Stacks[0].Outputs[0].OutputValue --output text)
                 export BASE_URL=$vari
                 pytest -s --junitxml=result-rest.xml test/integration/todoApiTest.py
               '''
@@ -50,6 +50,7 @@ pipeline {
                     git checkout -b master origin/master
                     git merge develop
                 '''
+                sh 'aws cloudformation delete-stack --stack-name todo-list-aws'
                 cleanWs()
             }
         }
