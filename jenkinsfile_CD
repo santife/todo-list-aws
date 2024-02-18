@@ -1,0 +1,56 @@
+pipeline {
+    agent any
+    stages {
+        stage ('Get Code'){
+            steps {
+                //Optenemos el codigo de nuestro Git
+                git url: 'https://github.com/santife/todo-list-aws.git', branch:'develop'
+                
+            }
+        }
+        
+       
+        
+        stage ('Static Test'){
+            steps{
+                sh '''
+                    export PYTHONPATH=$(pwd)
+                    flake8 --exit-zero --format=pylint src >flake8.out
+                '''
+                recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')], qualityGates: [[threshold: 8, type: 'TOTAL', unstable: false], [threshold: 10, type: 'TOTAL', unsatble: false]]
+            
+            }
+        }
+        
+        stage ('SAM Deply'){
+            steps{
+                sh '''
+                    sam build
+                    sam deploy --stack-name todo-list-aws-production --resolve-s3 --region us-east-1 --no-fail-on-empty-changeset --force-upload --config-env production
+                '''
+            }
+        }
+        
+        stage ('Rest Test'){
+            steps{
+              sh '''
+                vari=$(aws cloudformation describe-stacks --stack-name todo-list-aws-production --query Stacks[0].Outputs[0].OutputValue --output text)
+                export BASE_URL=$vari
+                pytest --junitxml=result-rest.xml -k "not deletetodo and not updatetodo and not addtodo" -s test/integration/todoApiTest.py
+              '''
+              junit 'result*.xml'
+            }
+        }
+        
+        stage ('Promote'){
+            steps{
+                sh'''
+                    git branch -a
+                    git checkout -b master origin/master
+                    git merge develop
+                '''
+                cleanWs()
+            }
+        }
+    }
+}
