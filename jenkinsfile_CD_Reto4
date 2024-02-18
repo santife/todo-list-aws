@@ -50,6 +50,7 @@ pipeline {
                     git checkout -b master origin/master
                     git merge develop
                 '''
+                sh 'aws cloudformation delete-stack --stack-name todo-list-aws-staging'
                 cleanWs()
             }
         }
