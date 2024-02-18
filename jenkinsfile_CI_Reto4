@@ -10,8 +10,6 @@ pipeline {
             }
         }
         
-       
-        
         stage ('Static Test'){
             steps{
                 sh '''
@@ -27,8 +25,8 @@ pipeline {
             steps{
                 sh '''
                     sam build
-                    
-                    sam deploy --stack-name todo-list-aws-staging --resolve-s3 --region us-east-1 --no-fail-on-empty-changeset --force-upload --config-env staging
+
+                    sam deploy --config-env staging --config-file samconfig.toml 
                 '''
             }
         }
@@ -36,7 +34,7 @@ pipeline {
         stage ('Rest Test'){
             steps{
               sh '''
-                vari=$(aws cloudformation describe-stacks --stack-name todo-list-aws-staging --query Stacks[0].Outputs[0].OutputValue --output text)
+                vari=$(aws cloudformation describe-stacks --stack-name todo-list-aws --query Stacks[0].Outputs[0].OutputValue --output text)
                 export BASE_URL=$vari
                 pytest -s --junitxml=result-rest.xml test/integration/todoApiTest.py
               '''
@@ -51,6 +49,7 @@ pipeline {
                     git checkout -b master origin/master
                     git merge develop
                 '''
+                //aws cloudformation delete-stack --stack-name todo-list-staging
                 cleanWs()
             }
         }
